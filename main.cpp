@@ -9,7 +9,7 @@ using namespace std;
 
 struct Znajomy
 {
-    int id;
+    int idZnajomego;
     string Imie;
     string Nazwisko;
     string NumerTelefonu;
@@ -19,7 +19,7 @@ struct Znajomy
 
 int wyswietlZnajomego (vector <Znajomy> daneZnajomych, int indeksZnajomego)
 {
-    cout<<endl<<daneZnajomych[indeksZnajomego].id<<". "<<daneZnajomych[indeksZnajomego].Imie<<" "
+    cout<<endl<<daneZnajomych[indeksZnajomego].idZnajomego<<". "<<daneZnajomych[indeksZnajomego].Imie<<" "
         <<daneZnajomych[indeksZnajomego].Nazwisko<<endl;
     cout<<daneZnajomych[indeksZnajomego].NumerTelefonu<<endl;
     cout<<daneZnajomych[indeksZnajomego].Email<<endl;
@@ -27,7 +27,7 @@ int wyswietlZnajomego (vector <Znajomy> daneZnajomych, int indeksZnajomego)
     return indeksZnajomego+1;
 }
 
-void przyporzadkujDaneDoOdpowiednichSzufladek (vector <Znajomy>& daneZnajomych, int& aktualnyId, fstream& ksiazkaAdresowa)
+void przyporzadkujDaneDoOdpowiednichSzufladek (vector <Znajomy>& daneZnajomych, int& aktualnyidZnajomego, fstream& ksiazkaAdresowa)
 {
     string daneDodawanegoZnajomego;
     getline (ksiazkaAdresowa, daneDodawanegoZnajomego);
@@ -42,8 +42,8 @@ void przyporzadkujDaneDoOdpowiednichSzufladek (vector <Znajomy>& daneZnajomych, 
             j++;
     }
     Znajomy daneZnajomegoWOdpowiednichSzufladkach;
-    daneZnajomegoWOdpowiednichSzufladkach.id = atoi(podzieloneDane[0].c_str());
-    aktualnyId = daneZnajomegoWOdpowiednichSzufladkach.id;
+    daneZnajomegoWOdpowiednichSzufladkach.idZnajomego = atoi(podzieloneDane[0].c_str());
+    aktualnyidZnajomego = daneZnajomegoWOdpowiednichSzufladkach.idZnajomego;
     daneZnajomegoWOdpowiednichSzufladkach.Imie = podzieloneDane[1];
     daneZnajomegoWOdpowiednichSzufladkach.Nazwisko = podzieloneDane[2];
     daneZnajomegoWOdpowiednichSzufladkach.NumerTelefonu = podzieloneDane[3];
@@ -53,7 +53,7 @@ void przyporzadkujDaneDoOdpowiednichSzufladek (vector <Znajomy>& daneZnajomych, 
     delete podzieloneDane;
 }
 
-int wczytajDaneZksiazkiAdresowej(vector <Znajomy>& daneZnajomych, int liczbaZnajomych, int& aktualnyId, fstream& ksiazkaAdresowa)
+int wczytajDaneZksiazkiAdresowej(vector <Znajomy>& daneZnajomych, int liczbaZnajomych, int& aktualnyidZnajomego, fstream& ksiazkaAdresowa)
 {
     ksiazkaAdresowa.open("ksiazka.txt", ios::in);
 
@@ -62,7 +62,7 @@ int wczytajDaneZksiazkiAdresowej(vector <Znajomy>& daneZnajomych, int liczbaZnaj
     {
         while (ksiazkaAdresowa.eof()==false)
         {
-            przyporzadkujDaneDoOdpowiednichSzufladek(daneZnajomych, aktualnyId, ksiazkaAdresowa);
+            przyporzadkujDaneDoOdpowiednichSzufladek(daneZnajomych, aktualnyidZnajomego, ksiazkaAdresowa);
             if (daneZnajomych.size() == 0) break;
             liczbaZnajomych++;
         }
@@ -71,18 +71,18 @@ int wczytajDaneZksiazkiAdresowej(vector <Znajomy>& daneZnajomych, int liczbaZnaj
     return liczbaZnajomych;
 }
 
-int dodajZnajomego(int aktualnyId, int& liczbaZnajomych, vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa)
+int dodajZnajomego(int aktualnyidZnajomego, int& liczbaZnajomych, vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa)
 {
     ksiazkaAdresowa.open("ksiazka.txt", ios::out|ios::app);
     Znajomy daneWprowadzanegoZnajomego;
-    daneWprowadzanegoZnajomego.id = aktualnyId + 1;
+    daneWprowadzanegoZnajomego.idZnajomego = aktualnyidZnajomego + 1;
     if (liczbaZnajomych==0)
     {
-        ksiazkaAdresowa<<aktualnyId+1<<"|";
+        ksiazkaAdresowa<<aktualnyidZnajomego+1<<"|";
     }
     else
     {
-        ksiazkaAdresowa<<endl<<aktualnyId+1<<"|";
+        ksiazkaAdresowa<<endl<<aktualnyidZnajomego+1<<"|";
     }
     cin.sync();
     cout<<"Podaj imie: ";
@@ -105,11 +105,11 @@ int dodajZnajomego(int aktualnyId, int& liczbaZnajomych, vector <Znajomy>& daneZ
     system("pause>null");
     daneZnajomych.push_back(daneWprowadzanegoZnajomego);
     liczbaZnajomych++;
-    aktualnyId++;
-    return aktualnyId;
+    aktualnyidZnajomego++;
+    return aktualnyidZnajomego;
 }
 
-void wyswietlWszystkichZnajomych (int liczbaZnajomych, int aktualnyId, vector <Znajomy> daneZnajomych)
+void wyswietlWszystkichZnajomych (int liczbaZnajomych, int aktualnyidZnajomego, vector <Znajomy> daneZnajomych)
 {
     if (liczbaZnajomych==0)
         cout<<"Ksiazka adresowa jest pusta"<<endl;
@@ -174,24 +174,24 @@ void szukajZnajomych (int liczbaZnajomych, vector <Znajomy> daneZnajomych)
     system("pause >null");
 }
 
-bool sprawdzCzyPodanyIdIstnieje (int podanyId, vector <Znajomy> daneZnajomych)
+bool sprawdzCzyPodanyidZnajomegoIstnieje (int podanyidZnajomego, vector <Znajomy> daneZnajomych)
 {
-    bool czyIdIstnieje = false;
+    bool czyidZnajomegoIstnieje = false;
     int koniec = daneZnajomych.size();
     for (int i=0; i<koniec; i++)
     {
-        if (daneZnajomych[i].id == podanyId)
-            czyIdIstnieje = true;
+        if (daneZnajomych[i].idZnajomego == podanyidZnajomego)
+            czyidZnajomegoIstnieje = true;
     }
-    return czyIdIstnieje;
+    return czyidZnajomegoIstnieje;
 }
 
-int znajdzIndeksZnajomego (vector <Znajomy> daneZnajomych, int numerIdZnajomego)
+int znajdzIndeksZnajomego (vector <Znajomy> daneZnajomych, int numeridZnajomego)
 {
     int indeksZnajomego = 0;
     for (int i=0; i<daneZnajomych.size(); i++)
     {
-        if (daneZnajomych[i].id == numerIdZnajomego)
+        if (daneZnajomych[i].idZnajomego == numeridZnajomego)
         {
             indeksZnajomego = i;
             break;
@@ -207,7 +207,7 @@ void eksportujKsiazkeDoPliku (vector <Znajomy> daneZnajomych, fstream& ksiazkaAd
     {
         if (i > 0)
             ksiazkaAdresowa<<endl;
-        ksiazkaAdresowa<<daneZnajomych[i].id<<"|"<<daneZnajomych[i].Imie<<"|"<<daneZnajomych[i].Nazwisko<<"|"
+        ksiazkaAdresowa<<daneZnajomych[i].idZnajomego<<"|"<<daneZnajomych[i].Imie<<"|"<<daneZnajomych[i].Nazwisko<<"|"
                        <<daneZnajomych[i].NumerTelefonu<<"|"<<daneZnajomych[i].Email<<"|"<<daneZnajomych[i].Adres<<"|";
     }
     ksiazkaAdresowa.close();
@@ -225,7 +225,7 @@ void edytujZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa,
         int numerIdZnajomego = 0;
         cout<< "podaj numer Id znajomego, ktorego chcesz edytowac: ";
         cin >> numerIdZnajomego;
-        if (sprawdzCzyPodanyIdIstnieje(numerIdZnajomego, daneZnajomych))
+        if (sprawdzCzyPodanyidZnajomegoIstnieje(numerIdZnajomego, daneZnajomych))
         {
             numerIdZnajomego = znajdzIndeksZnajomego(daneZnajomych, numerIdZnajomego);
             char wybranaOpcja = '0';
@@ -309,20 +309,20 @@ void edytujZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa,
     }
 }
 
-int ustawAktualnyId (vector <Znajomy> daneZnajomych, int aktualnyId)
+int ustawAktualnyidZnajomego (vector <Znajomy> daneZnajomych, int aktualnyidZnajomego)
 {
     int maksimum=0;
     for (int i=0; i<daneZnajomych.size(); i++)
     {
-        if ( daneZnajomych[i].id > maksimum)
+        if ( daneZnajomych[i].idZnajomego > maksimum)
         {
-            maksimum = daneZnajomych[i].id;
+            maksimum = daneZnajomych[i].idZnajomego;
         }
     }
     return maksimum;
 }
 
-int usunZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, int liczbaZnajomych, int& aktualnyId)
+int usunZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, int liczbaZnajomych, int& aktualnyidZnajomego)
 {
     if (liczbaZnajomych == 0)
     {
@@ -330,13 +330,13 @@ int usunZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, in
         system ("pause >null");
         return liczbaZnajomych;
     }
-    int idWybranePrzezUzytkownika;
+    int idZnajomegoWybranePrzezUzytkownika;
     cout << "Podaj Id znajomego, ktorego chcesz usunac: ";
-    cin >> idWybranePrzezUzytkownika;
-    if (sprawdzCzyPodanyIdIstnieje(idWybranePrzezUzytkownika, daneZnajomych))
+    cin >> idZnajomegoWybranePrzezUzytkownika;
+    if (sprawdzCzyPodanyidZnajomegoIstnieje(idZnajomegoWybranePrzezUzytkownika, daneZnajomych))
     {
-        int indeksZnajomego = znajdzIndeksZnajomego(daneZnajomych, idWybranePrzezUzytkownika);
-        cout << "Czy na pewno usunac z ksiazki znajomego: "<< daneZnajomych[indeksZnajomego].id <<
+        int indeksZnajomego = znajdzIndeksZnajomego(daneZnajomych, idZnajomegoWybranePrzezUzytkownika);
+        cout << "Czy na pewno usunac z ksiazki znajomego: "<< daneZnajomych[indeksZnajomego].idZnajomego <<
              ". " <<daneZnajomych[indeksZnajomego].Imie << " " << daneZnajomych[indeksZnajomego].Nazwisko <<" ? (t/n)";
         char wybranaOpcja;
         while (true)
@@ -350,9 +350,9 @@ int usunZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, in
             daneZnajomych.erase(daneZnajomych.begin()+indeksZnajomego);
             liczbaZnajomych--;
             eksportujKsiazkeDoPliku (daneZnajomych, ksiazkaAdresowa);
-            if (idWybranePrzezUzytkownika == aktualnyId)
+            if (idZnajomegoWybranePrzezUzytkownika == aktualnyidZnajomego)
             {
-                aktualnyId = ustawAktualnyId(daneZnajomych, aktualnyId);
+                aktualnyidZnajomego = ustawAktualnyidZnajomego(daneZnajomych, aktualnyidZnajomego);
             }
             cout << endl <<"Usunieto znajomego pomyslnie";
             system ("pause >null");
@@ -372,8 +372,8 @@ int main()
     fstream ksiazkaAdresowa;
     int liczbaZnajomych=0;
     char wybranaOpcja;
-    int aktualnyId=0;
-    liczbaZnajomych=wczytajDaneZksiazkiAdresowej(daneZnajomych, liczbaZnajomych, aktualnyId, ksiazkaAdresowa);
+    int aktualnyidZnajomego=0;
+    liczbaZnajomych=wczytajDaneZksiazkiAdresowej(daneZnajomych, liczbaZnajomych, aktualnyidZnajomego, ksiazkaAdresowa);
     while(1)
     {
         system("cls");
@@ -396,7 +396,7 @@ int main()
         {
         case '1':
         {
-            aktualnyId = dodajZnajomego(aktualnyId, liczbaZnajomych, daneZnajomych, ksiazkaAdresowa);
+            aktualnyidZnajomego = dodajZnajomego(aktualnyidZnajomego, liczbaZnajomych, daneZnajomych, ksiazkaAdresowa);
         }
         break;
         case '2':
@@ -406,7 +406,7 @@ int main()
         break;
         case '3':
         {
-            wyswietlWszystkichZnajomych(liczbaZnajomych, aktualnyId, daneZnajomych);
+            wyswietlWszystkichZnajomych(liczbaZnajomych, aktualnyidZnajomego, daneZnajomych);
         }
         break;
         case '4':
@@ -416,7 +416,7 @@ int main()
         break;
         case '5':
         {
-            liczbaZnajomych = usunZnajomego(daneZnajomych, ksiazkaAdresowa, liczbaZnajomych, aktualnyId);
+            liczbaZnajomych = usunZnajomego(daneZnajomych, ksiazkaAdresowa, liczbaZnajomych, aktualnyidZnajomego);
         }
         break;
         case '9':
