@@ -1,11 +1,17 @@
 #include <iostream>
-#include <fstream>
-#include <cstdlib>
+#include <vector>
 #include <conio.h>
 #include <windows.h>
-#include <vector>
+#include <fstream>
+#include <cstdlib>
 
 using namespace std;
+
+struct Uzytkownik
+{
+    int Id;
+    string nazwa, haslo;
+};
 
 struct Znajomy
 {
@@ -17,6 +23,102 @@ struct Znajomy
     string Adres;
 };
 
+bool czyJestTakiUzytkownik (vector <Uzytkownik> uzytkownicy, string podanaNazwa)
+{
+    bool czyUzytkownikIstnieje = false;
+    for (int i = 0; i < uzytkownicy.size(); i++)
+    {
+        if (uzytkownicy[i].nazwa == podanaNazwa)
+        {
+            czyUzytkownikIstnieje = true;
+            break;
+        }
+    }
+    return czyUzytkownikIstnieje;
+}
+
+void zarejestrujNowegoUzytkownika (int& ostatniNumerIdUzytkownika, vector <Uzytkownik>& uzytkownicy)
+{
+    string podanaNazwa="";
+    cout << "podaj nazwe uzytkownika:";
+    cin >> podanaNazwa;
+    if (czyJestTakiUzytkownik(uzytkownicy, podanaNazwa))
+    {
+        cout << "podana nazwa jest juz zajeta";
+        system ("pause >null");
+    }
+    else
+    {
+        ostatniNumerIdUzytkownika++;
+        Uzytkownik dodawanyUzytkownik;
+        dodawanyUzytkownik.Id = ostatniNumerIdUzytkownika;
+        dodawanyUzytkownik.nazwa = podanaNazwa;
+        cout<<"podaj haslo:";
+        cin >> dodawanyUzytkownik.haslo;
+        uzytkownicy.push_back(dodawanyUzytkownik);
+        fstream plikPrzechowujacyUzytkownikow;
+        plikPrzechowujacyUzytkownikow.open("uzytkownicy.txt", ios::out | ios::app);
+        if (uzytkownicy.size() > 1)
+        {
+            plikPrzechowujacyUzytkownikow << endl << dodawanyUzytkownik.Id << "|" << dodawanyUzytkownik.nazwa
+                                          << "|" << dodawanyUzytkownik.haslo << "|";
+        }
+        else
+        {
+            plikPrzechowujacyUzytkownikow << dodawanyUzytkownik.Id << "|" << dodawanyUzytkownik.nazwa
+                                          << "|" << dodawanyUzytkownik.haslo << "|";
+        }
+        plikPrzechowujacyUzytkownikow.close();
+    }
+}
+
+int wczytajUzytkownikow (vector <Uzytkownik>& uzytkownicy, int ostatniNumerIdUzytkownika)
+{
+    fstream plikPrzechowujacyUztykownikow;
+    plikPrzechowujacyUztykownikow.open ("uzytkownicy.txt", ios::in);
+    if (!(plikPrzechowujacyUztykownikow.good()))
+        return 0;
+    else
+    {
+        string* podzieloneDane;
+        string pobranaLinia = "";
+        Uzytkownik pobieranyUzytkownik;
+        while (getline(plikPrzechowujacyUztykownikow, pobranaLinia))
+        {
+            podzieloneDane = new string [3];
+            int j = 0;
+            for (int i = 0; i < pobranaLinia.length(); i++)
+            {
+                if (pobranaLinia[i] != '|')
+                {
+                    *(podzieloneDane + j) += pobranaLinia[i];
+                }
+                else
+                {
+                    j++;
+                }
+            }
+            pobieranyUzytkownik.Id = atoi ((*podzieloneDane).c_str());
+            pobieranyUzytkownik.nazwa = *(podzieloneDane + 1);
+            pobieranyUzytkownik.haslo = *(podzieloneDane + 2);
+            delete podzieloneDane;
+            uzytkownicy.push_back(pobieranyUzytkownik);
+        }
+    }
+    plikPrzechowujacyUztykownikow.close();
+    return uzytkownicy[uzytkownicy.size()-1].Id;
+}
+
+int znajdzIndeksUzytkownika (vector <Uzytkownik> uzytkownicy, string nazwa)
+{
+    for (int i = 0; i < uzytkownicy.size(); i++)
+    {
+        if (uzytkownicy[i].nazwa == nazwa)
+            return i;
+    }
+    return 0;
+}
+
 int wyswietlZnajomego (vector <Znajomy> daneZnajomych, int indeksZnajomego)
 {
     cout<<endl<<daneZnajomych[indeksZnajomego].idZnajomego<<". "<<daneZnajomych[indeksZnajomego].Imie<<" "
@@ -27,12 +129,14 @@ int wyswietlZnajomego (vector <Znajomy> daneZnajomych, int indeksZnajomego)
     return indeksZnajomego+1;
 }
 
-void przyporzadkujDaneDoOdpowiednichSzufladek (vector <Znajomy>& daneZnajomych, int& aktualnyidZnajomego, fstream& ksiazkaAdresowa)
+void przyporzadkujDaneDoOdpowiednichSzufladek (int idUzytkownika, vector <Znajomy>& daneZnajomych,
+        int& aktualnyIdZnajomego, fstream& ksiazkaAdresowa)
 {
     string daneDodawanegoZnajomego;
     getline (ksiazkaAdresowa, daneDodawanegoZnajomego);
-    if (daneDodawanegoZnajomego == "") return;
-    string* podzieloneDane = new string [6];
+    if (daneDodawanegoZnajomego == "")
+        return;
+    string* podzieloneDane = new string [7];
     int j=0;
     for (int i=0; i<daneDodawanegoZnajomego.length(); i++)
     {
@@ -41,19 +145,23 @@ void przyporzadkujDaneDoOdpowiednichSzufladek (vector <Znajomy>& daneZnajomych, 
         else
             j++;
     }
-    Znajomy daneZnajomegoWOdpowiednichSzufladkach;
-    daneZnajomegoWOdpowiednichSzufladkach.idZnajomego = atoi(podzieloneDane[0].c_str());
-    aktualnyidZnajomego = daneZnajomegoWOdpowiednichSzufladkach.idZnajomego;
-    daneZnajomegoWOdpowiednichSzufladkach.Imie = podzieloneDane[1];
-    daneZnajomegoWOdpowiednichSzufladkach.Nazwisko = podzieloneDane[2];
-    daneZnajomegoWOdpowiednichSzufladkach.NumerTelefonu = podzieloneDane[3];
-    daneZnajomegoWOdpowiednichSzufladkach.Email = podzieloneDane[4];
-    daneZnajomegoWOdpowiednichSzufladkach.Adres = podzieloneDane[5];
-    daneZnajomych.push_back(daneZnajomegoWOdpowiednichSzufladkach);
+    aktualnyIdZnajomego = atoi(podzieloneDane[0].c_str());
+    if (atoi (podzieloneDane[1].c_str()) == idUzytkownika)
+    {
+        Znajomy daneZnajomegoWOdpowiednichSzufladkach;
+        daneZnajomegoWOdpowiednichSzufladkach.idZnajomego = atoi(podzieloneDane[0].c_str());
+        daneZnajomegoWOdpowiednichSzufladkach.Imie = podzieloneDane[2];
+        daneZnajomegoWOdpowiednichSzufladkach.Nazwisko = podzieloneDane[3];
+        daneZnajomegoWOdpowiednichSzufladkach.NumerTelefonu = podzieloneDane[4];
+        daneZnajomegoWOdpowiednichSzufladkach.Email = podzieloneDane[5];
+        daneZnajomegoWOdpowiednichSzufladkach.Adres = podzieloneDane[6];
+        daneZnajomych.push_back(daneZnajomegoWOdpowiednichSzufladkach);
+    }
     delete podzieloneDane;
 }
 
-int wczytajDaneZksiazkiAdresowej(vector <Znajomy>& daneZnajomych, int liczbaZnajomych, int& aktualnyidZnajomego, fstream& ksiazkaAdresowa)
+int wczytajDaneZksiazkiAdresowej(int idUzytkownika, vector <Znajomy>& daneZnajomych, int liczbaZnajomych,
+                                 int& aktualnyidZnajomego, fstream& ksiazkaAdresowa)
 {
     ksiazkaAdresowa.open("ksiazka.txt", ios::in);
 
@@ -62,21 +170,22 @@ int wczytajDaneZksiazkiAdresowej(vector <Znajomy>& daneZnajomych, int liczbaZnaj
     {
         while (ksiazkaAdresowa.eof()==false)
         {
-            przyporzadkujDaneDoOdpowiednichSzufladek(daneZnajomych, aktualnyidZnajomego, ksiazkaAdresowa);
-            if (daneZnajomych.size() == 0) break;
-            liczbaZnajomych++;
+            przyporzadkujDaneDoOdpowiednichSzufladek(idUzytkownika, daneZnajomych, aktualnyidZnajomego, ksiazkaAdresowa);
+            if (daneZnajomych.size() > liczbaZnajomych)
+                liczbaZnajomych++;
         }
     }
     ksiazkaAdresowa.close();
     return liczbaZnajomych;
 }
 
-int dodajZnajomego(int aktualnyidZnajomego, int& liczbaZnajomych, vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa)
+int dodajZnajomego(int idUzytkownika, int aktualnyidZnajomego, int& liczbaZnajomych,
+                   vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa)
 {
     ksiazkaAdresowa.open("ksiazka.txt", ios::out|ios::app);
     Znajomy daneWprowadzanegoZnajomego;
     daneWprowadzanegoZnajomego.idZnajomego = aktualnyidZnajomego + 1;
-    if (liczbaZnajomych==0)
+    if (aktualnyidZnajomego == 0)
     {
         ksiazkaAdresowa<<aktualnyidZnajomego+1<<"|";
     }
@@ -84,6 +193,7 @@ int dodajZnajomego(int aktualnyidZnajomego, int& liczbaZnajomych, vector <Znajom
     {
         ksiazkaAdresowa<<endl<<aktualnyidZnajomego+1<<"|";
     }
+    ksiazkaAdresowa<<idUzytkownika<<"|";
     cin.sync();
     cout<<"Podaj imie: ";
     getline(cin, daneWprowadzanegoZnajomego.Imie);
@@ -130,7 +240,6 @@ void szukajZnajomych (int liczbaZnajomych, vector <Znajomy> daneZnajomych)
     else
     {
         system("cls");
-        cout<<"Liczba znajomych w ksiazce adresowej wynosi: "<<liczbaZnajomych<<endl<<endl;
         cout<<"---------------------MENU--------------------"<<endl;
         cout<<"1. szukaj po imieniu"<<endl;
         cout<<"2. szukaj po nazwisku"<<endl;
@@ -169,7 +278,6 @@ void szukajZnajomych (int liczbaZnajomych, vector <Znajomy> daneZnajomych)
             if (liczbaZnalezionychZnajomych==0)
                 cout<<"Nie ma znajomego o podanym nazwisku"<<endl;
         }
-
     }
     system("pause >null");
 }
@@ -200,20 +308,71 @@ int znajdzIndeksZnajomego (vector <Znajomy> daneZnajomych, int numeridZnajomego)
     return indeksZnajomego;
 }
 
-void eksportujKsiazkeDoPliku (vector <Znajomy> daneZnajomych, fstream& ksiazkaAdresowa)
+int pozyskajIdZnajomego (string daneJednegoZnajomego)
 {
-    ksiazkaAdresowa.open("ksiazka.txt", ios::out);
-    for (int i=0; i<daneZnajomych.size(); i++)
+    if (daneJednegoZnajomego == "")
+        return 0;
+    string tekstoweID="";
+    int i = 0;
+    while (daneJednegoZnajomego[i] != '|')
     {
-        if (i > 0)
-            ksiazkaAdresowa<<endl;
-        ksiazkaAdresowa<<daneZnajomych[i].idZnajomego<<"|"<<daneZnajomych[i].Imie<<"|"<<daneZnajomych[i].Nazwisko<<"|"
-                       <<daneZnajomych[i].NumerTelefonu<<"|"<<daneZnajomych[i].Email<<"|"<<daneZnajomych[i].Adres<<"|";
+        tekstoweID += daneJednegoZnajomego[i];
+        i++;
     }
-    ksiazkaAdresowa.close();
+    int idZPliku = atoi (tekstoweID.c_str());
+    return idZPliku;
 }
 
-void edytujZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, int liczbaZnajomych)
+void edytujPlikZKsiazkaAdresowa (int idUzytkownika, vector <Znajomy> daneZnajomych,
+                                 fstream& ksiazkaAdresowa, int idZnajomego, string usunLubEdytuj)
+{
+    fstream plikTymczasowy;
+    plikTymczasowy.open("tymczasowy.txt", ios::out);
+    ksiazkaAdresowa.open("ksiazka.txt", ios::in);
+    if (!(ksiazkaAdresowa.good()))
+        return;
+    string pobranaLinia="";
+    int numerLinii = 0;
+    while (getline(ksiazkaAdresowa, pobranaLinia))
+    {
+        int numerIdPobranejLinii = pozyskajIdZnajomego(pobranaLinia);
+        if (usunLubEdytuj == "edytuj")
+        {
+            if (numerIdPobranejLinii == idZnajomego)
+            {
+                int i = znajdzIndeksZnajomego(daneZnajomych, idZnajomego);
+                if (numerLinii != 0)
+                    plikTymczasowy<<endl;
+                plikTymczasowy<<daneZnajomych[i].idZnajomego<<"|"<<idUzytkownika<<"|"<<daneZnajomych[i].Imie<<"|"<<daneZnajomych[i].Nazwisko<<"|"
+                              <<daneZnajomych[i].NumerTelefonu<<"|"<<daneZnajomych[i].Email<<"|"<<daneZnajomych[i].Adres<<"|";
+            }
+            else
+            {
+                if (numerLinii != 0)
+                    plikTymczasowy<<endl;
+                plikTymczasowy<<pobranaLinia;
+            }
+            numerLinii++;
+        }
+        else
+        {
+            if (numerIdPobranejLinii == idZnajomego);
+            else
+            {
+                if (numerLinii != 0)
+                    plikTymczasowy<<endl;
+                plikTymczasowy<<pobranaLinia;
+            }
+            numerLinii++;
+        }
+    }
+    ksiazkaAdresowa.close();
+    plikTymczasowy.close();
+    remove ("ksiazka.txt");
+    rename ("tymczasowy.txt", "ksiazka.txt");
+}
+
+void edytujZnajomego (int idUzytkownika, vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, int liczbaZnajomych)
 {
     if (liczbaZnajomych == 0)
     {
@@ -227,12 +386,12 @@ void edytujZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa,
         cin >> numerIdZnajomego;
         if (sprawdzCzyPodanyidZnajomegoIstnieje(numerIdZnajomego, daneZnajomych))
         {
-            numerIdZnajomego = znajdzIndeksZnajomego(daneZnajomych, numerIdZnajomego);
+            int indeksZnajomego = znajdzIndeksZnajomego(daneZnajomych, numerIdZnajomego);
             char wybranaOpcja = '0';
             while (wybranaOpcja != '6')
             {
                 system("cls");
-                wyswietlZnajomego(daneZnajomych, numerIdZnajomego);
+                wyswietlZnajomego(daneZnajomych, indeksZnajomego);
                 cout<<"Wybierz co chcesz edytowac: "<<endl;
                 cout<<"1. Imie"<<endl;
                 cout<<"2. Nazwisko"<<endl;
@@ -249,55 +408,55 @@ void edytujZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa,
                 }
                 switch (wybranaOpcja)
                 {
-                case '1':
-                {
-                    cout<<"Podaj nowe imie: ";
-                    cin.sync();
-                    getline(cin, daneZnajomych[numerIdZnajomego].Imie);
-                    cout<<"Imie zostalo zmienione pomyslnie";
-                    system ("pause >null");
-                }
-                break;
-                case '2':
-                {
-                    cout<<"Podaj nowe nazwisko: ";
-                    cin.sync();
-                    getline(cin, daneZnajomych[numerIdZnajomego].Nazwisko);
-                    cout<<"Nazwisko zostalo zmienione pomyslnie";
-                    system ("pause >null");
-                }
-                break;
-                case '3':
-                {
-                    cout<<"Podaj nowy numer telefonu: ";
-                    cin.sync();
-                    getline(cin, daneZnajomych[numerIdZnajomego].NumerTelefonu);
-                    cout<<"Numer telefonu zostal zmieniony pomyslnie";
-                    system ("pause >null");
-                }
-                break;
-                case '4':
-                {
-                    cout<<"Podaj nowy email: ";
-                    cin.sync();
-                    getline (cin, daneZnajomych[numerIdZnajomego].Email);
-                    cout<<"Email zostal zmieniony pomyslnie";
-                    system ("pause >null");
-                }
-                break;
-                case '5':
-                {
-                    cout<<"Podaj nowy adres: ";
-                    cin.sync();
-                    getline(cin, daneZnajomych[numerIdZnajomego].Adres);
-                    cout<<"Adres zostal zmieniony pomyslnie";
-                    system ("pause >null");
-                }
-                break;
-                case '6':
-                {
-                    eksportujKsiazkeDoPliku (daneZnajomych, ksiazkaAdresowa);
-                }
+                    case '1':
+                    {
+                        cout<<"Podaj nowe imie: ";
+                        cin.sync();
+                        getline(cin, daneZnajomych[indeksZnajomego].Imie);
+                        cout<<"Imie zostalo zmienione pomyslnie";
+                        system ("pause >null");
+                    }
+                    break;
+                    case '2':
+                    {
+                        cout<<"Podaj nowe nazwisko: ";
+                        cin.sync();
+                        getline(cin, daneZnajomych[indeksZnajomego].Nazwisko);
+                        cout<<"Nazwisko zostalo zmienione pomyslnie";
+                        system ("pause >null");
+                    }
+                    break;
+                    case '3':
+                    {
+                        cout<<"Podaj nowy numer telefonu: ";
+                        cin.sync();
+                        getline(cin, daneZnajomych[indeksZnajomego].NumerTelefonu);
+                        cout<<"Numer telefonu zostal zmieniony pomyslnie";
+                        system ("pause >null");
+                    }
+                    break;
+                    case '4':
+                    {
+                        cout<<"Podaj nowy email: ";
+                        cin.sync();
+                        getline (cin, daneZnajomych[indeksZnajomego].Email);
+                        cout<<"Email zostal zmieniony pomyslnie";
+                        system ("pause >null");
+                    }
+                    break;
+                    case '5':
+                    {
+                        cout<<"Podaj nowy adres: ";
+                        cin.sync();
+                        getline(cin, daneZnajomych[indeksZnajomego].Adres);
+                        cout<<"Adres zostal zmieniony pomyslnie";
+                        system ("pause >null");
+                    }
+                    break;
+                    case '6':
+                    {
+                        edytujPlikZKsiazkaAdresowa (idUzytkownika, daneZnajomych, ksiazkaAdresowa, numerIdZnajomego, "edytuj");
+                    }
                 }
             }
         }
@@ -309,20 +468,37 @@ void edytujZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa,
     }
 }
 
-int ustawAktualnyidZnajomego (vector <Znajomy> daneZnajomych, int aktualnyidZnajomego)
+int ustalAktualnyID (fstream& ksiazkaAdresowa)
 {
-    int maksimum=0;
-    for (int i=0; i<daneZnajomych.size(); i++)
+    ksiazkaAdresowa.open("ksiazka.txt", ios::in);
+    if (!(ksiazkaAdresowa.good()))
+        return 0;
+    string pobranaLiniaZPliku;
+    int aktualnyID=0;
+    while (getline(ksiazkaAdresowa, pobranaLiniaZPliku))
     {
-        if ( daneZnajomych[i].idZnajomego > maksimum)
+        if (pobranaLiniaZPliku == "")
+            return aktualnyID;
+        else
         {
-            maksimum = daneZnajomych[i].idZnajomego;
+            string tekstowyNumerID="";
+            int i = 0;
+            while (pobranaLiniaZPliku[i] != '|')
+            {
+                tekstowyNumerID += pobranaLiniaZPliku[i];
+                i++;
+            }
+            int NumerId = atoi (tekstowyNumerID.c_str());
+            if (NumerId > aktualnyID)
+                aktualnyID = NumerId;
         }
     }
-    return maksimum;
+    ksiazkaAdresowa.close();
+    return aktualnyID;
 }
 
-int usunZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, int liczbaZnajomych, int& aktualnyidZnajomego)
+int usunZnajomego (int idUzytkownika, vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa,
+                   int liczbaZnajomych, int& aktualnyidZnajomego)
 {
     if (liczbaZnajomych == 0)
     {
@@ -349,10 +525,11 @@ int usunZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, in
         {
             daneZnajomych.erase(daneZnajomych.begin()+indeksZnajomego);
             liczbaZnajomych--;
-            eksportujKsiazkeDoPliku (daneZnajomych, ksiazkaAdresowa);
+            edytujPlikZKsiazkaAdresowa (idUzytkownika, daneZnajomych,
+                                        ksiazkaAdresowa, idZnajomegoWybranePrzezUzytkownika, "usun");
             if (idZnajomegoWybranePrzezUzytkownika == aktualnyidZnajomego)
             {
-                aktualnyidZnajomego = ustawAktualnyidZnajomego(daneZnajomych, aktualnyidZnajomego);
+                aktualnyidZnajomego = ustalAktualnyID(ksiazkaAdresowa);
             }
             cout << endl <<"Usunieto znajomego pomyslnie";
             system ("pause >null");
@@ -366,37 +543,83 @@ int usunZnajomego (vector <Znajomy>& daneZnajomych, fstream& ksiazkaAdresowa, in
     return liczbaZnajomych;
 }
 
-int main()
+void zmienHaslo (int numerUzytkownika, vector <Uzytkownik>& uzytkownicy)
+{
+    string podaneDotychczasoweHaslo="";
+    for (int i = 0; i < 3; i++)
+    {
+        cout << "Podaj dotychczasowe haslo: ";
+        cin >> podaneDotychczasoweHaslo;
+        int indeksUzytkownika = 0;
+        for (int i = 0; i < uzytkownicy.size(); i++)
+        {
+            if (uzytkownicy[i].Id == numerUzytkownika)
+            {
+                indeksUzytkownika = i;
+                break;
+            }
+        }
+        if (podaneDotychczasoweHaslo != uzytkownicy[indeksUzytkownika].haslo)
+        {
+            cout << "Podane haslo jest nieprawidlowe"<<endl;
+            system ("pause >null");
+        }
+        else
+        {
+            string noweHaslo = "";
+            cout << "Podaj nowe haslo: ";
+            cin >> noweHaslo;
+            uzytkownicy[indeksUzytkownika].haslo = noweHaslo;
+            cout << "Haslo zostalo zmienione";
+            system ("pause >null");
+            break;
+        }
+    }
+    fstream plikZDanymiUzytkownikow;
+    plikZDanymiUzytkownikow.open("uzytkownicy.txt", ios::out);
+    for (int i = 0; i < uzytkownicy.size(); i++)
+    {
+        if (i > 0)
+            plikZDanymiUzytkownikow << endl;
+        plikZDanymiUzytkownikow << uzytkownicy[i].Id << "|" << uzytkownicy[i].nazwa << "|" << uzytkownicy[i].haslo << "|";
+    }
+    plikZDanymiUzytkownikow.close();
+    return;
+}
+
+void wczytajKsiazkeAdresowa(int numerUzytkownika, vector <Uzytkownik>& uzytkownicy)
 {
     vector <Znajomy> daneZnajomych;
     fstream ksiazkaAdresowa;
     int liczbaZnajomych=0;
     char wybranaOpcja;
-    int aktualnyidZnajomego=0;
-    liczbaZnajomych=wczytajDaneZksiazkiAdresowej(daneZnajomych, liczbaZnajomych, aktualnyidZnajomego, ksiazkaAdresowa);
+    int aktualnyidZnajomego=ustalAktualnyID(ksiazkaAdresowa);
+    liczbaZnajomych=wczytajDaneZksiazkiAdresowej(numerUzytkownika, daneZnajomych, liczbaZnajomych, aktualnyidZnajomego,
+                    ksiazkaAdresowa);
     while(1)
     {
         system("cls");
-        cout<<"Liczba znajomych w ksiazce adresowej wynosi: "<<liczbaZnajomych<<endl<<endl;
         cout<<"---------------------MENU--------------------"<<endl;
         cout<<"1. Dodaj znajomego"<<endl;
         cout<<"2. Szukaj znajomego"<<endl;
         cout<<"3. Wyswietl wszystkich znajomych"<<endl;
         cout<<"4. Edytuj znajomego"<<endl;
         cout<<"5. Usun znajomego"<<endl;
-        cout<<"9. Wyjscie z programu ksiazka adresowa"<<endl;
+        cout<<"6. Zmien haslo"<<endl;
+        cout<<"9. Wyloguj sie"<<endl;
         while(true)
         {
             wybranaOpcja=getch();
             if (wybranaOpcja=='1'||wybranaOpcja=='2'||wybranaOpcja=='3'
-                    ||wybranaOpcja=='4'||wybranaOpcja=='5'||wybranaOpcja=='9')
+                    ||wybranaOpcja=='4'||wybranaOpcja=='5'||wybranaOpcja=='6'||wybranaOpcja=='9')
                 break;
         }
         switch (wybranaOpcja)
         {
         case '1':
         {
-            aktualnyidZnajomego = dodajZnajomego(aktualnyidZnajomego, liczbaZnajomych, daneZnajomych, ksiazkaAdresowa);
+            aktualnyidZnajomego = dodajZnajomego(numerUzytkownika, aktualnyidZnajomego, liczbaZnajomych,
+                                                 daneZnajomych, ksiazkaAdresowa);
         }
         break;
         case '2':
@@ -411,15 +634,96 @@ int main()
         break;
         case '4':
         {
-            edytujZnajomego(daneZnajomych, ksiazkaAdresowa, liczbaZnajomych);
+            edytujZnajomego(numerUzytkownika, daneZnajomych, ksiazkaAdresowa, liczbaZnajomych);
         }
         break;
         case '5':
         {
-            liczbaZnajomych = usunZnajomego(daneZnajomych, ksiazkaAdresowa, liczbaZnajomych, aktualnyidZnajomego);
+            liczbaZnajomych = usunZnajomego(numerUzytkownika, daneZnajomych, ksiazkaAdresowa,
+                                            liczbaZnajomych, aktualnyidZnajomego);
+        }
+        break;
+        case '6':
+        {
+            zmienHaslo (numerUzytkownika, uzytkownicy);
         }
         break;
         case '9':
+        {
+            return;
+        }
+        break;
+        }
+    }
+}
+
+void zalogujSie (vector <Uzytkownik>& uzytkownicy)
+{
+    if (uzytkownicy.size() == 0)
+    {
+        cout << "Brak zarejestrowanych uzytkownikow";
+        system("pause >null");
+    }
+    else
+    {
+        string nazwaPodanaPrzezUzytkownika;
+        cout << "Podaj nazwe uzytkownika: ";
+        cin >> nazwaPodanaPrzezUzytkownika;
+        if (czyJestTakiUzytkownik(uzytkownicy, nazwaPodanaPrzezUzytkownika))
+        {
+            int indeksUzytkownika = znajdzIndeksUzytkownika(uzytkownicy, nazwaPodanaPrzezUzytkownika);
+            string podaneHaslo="";
+            for (int i = 0; i < 3; i++)
+            {
+                cout << "Podaj haslo: ";
+                cin >> podaneHaslo;
+                if (podaneHaslo != uzytkownicy[indeksUzytkownika].haslo)
+                {
+                    cout << "haslo niepoprawne"<<endl;
+                    system ("pause >null");
+                }
+                else
+                {
+                    wczytajKsiazkeAdresowa(uzytkownicy[indeksUzytkownika].Id, uzytkownicy);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            cout << "Nie istnieje uzytkownik o podanej nazwie";
+            system ("pause >null");
+        }
+    }
+}
+
+int main()
+{
+    vector <Uzytkownik> uzytkownicy;
+    int ostatniNumerIdUzytkownika = wczytajUzytkownikow(uzytkownicy, ostatniNumerIdUzytkownika);
+    char wybranaOpcja;
+
+    while(true)
+    {
+        system("cls");
+        cout<<"---------------------MENU--------------------"<<endl;
+        cout<<"1. Zaloguj sie"<<endl;
+        cout<<"2. Zarejestruj sie"<<endl;
+        cout<<"3. Wyjdz"<<endl;
+        wybranaOpcja = getch();
+        switch (wybranaOpcja)
+        {
+        case '1':
+        {
+            zalogujSie(uzytkownicy);
+        }
+        break;
+        case '2':
+        {
+            zarejestrujNowegoUzytkownika(ostatniNumerIdUzytkownika, uzytkownicy);
+        }
+        break;
+        case '3':
         {
             exit(0);
         }
