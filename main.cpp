@@ -7,10 +7,43 @@
 
 using namespace std;
 
-struct Uzytkownik
+class Uzytkownik
 {
+
     int Id;
     string nazwa, haslo;
+
+public:
+    Uzytkownik (int liczba = 0, string n = "nazwa", string h = "haslo")
+    {
+        Id = liczba;
+        nazwa = n;
+        haslo = h;
+    }
+    ustawId (int x)
+    {
+        Id = x;
+    }
+    ustawNazwe (string x)
+    {
+        nazwa = x;
+    }
+    ustawHaslo (string x)
+    {
+        haslo = x;
+    }
+    int pokazId()
+    {
+        return Id;
+    }
+    string pokazNazwe()
+    {
+        return nazwa;
+    }
+    string pokazHaslo()
+    {
+        return haslo;
+    }
 };
 
 struct Znajomy
@@ -28,7 +61,7 @@ bool czyJestTakiUzytkownik (vector <Uzytkownik> uzytkownicy, string podanaNazwa)
     bool czyUzytkownikIstnieje = false;
     for (int i = 0; i < uzytkownicy.size(); i++)
     {
-        if (uzytkownicy[i].nazwa == podanaNazwa)
+        if (uzytkownicy[i].pokazNazwe() == podanaNazwa)
         {
             czyUzytkownikIstnieje = true;
             break;
@@ -51,28 +84,32 @@ void zarejestrujNowegoUzytkownika (int& ostatniNumerIdUzytkownika, vector <Uzytk
     {
         ostatniNumerIdUzytkownika++;
         Uzytkownik dodawanyUzytkownik;
-        dodawanyUzytkownik.Id = ostatniNumerIdUzytkownika;
-        dodawanyUzytkownik.nazwa = podanaNazwa;
+        dodawanyUzytkownik.ustawId(ostatniNumerIdUzytkownika);
+        dodawanyUzytkownik.ustawNazwe(podanaNazwa);
+        string podaneHaslo;
         cout<<"podaj haslo:";
-        cin >> dodawanyUzytkownik.haslo;
+        cin >> podaneHaslo;
+        dodawanyUzytkownik.ustawHaslo(podaneHaslo);
         uzytkownicy.push_back(dodawanyUzytkownik);
         fstream plikPrzechowujacyUzytkownikow;
         plikPrzechowujacyUzytkownikow.open("uzytkownicy.txt", ios::out | ios::app);
         if (uzytkownicy.size() > 1)
         {
-            plikPrzechowujacyUzytkownikow << endl << dodawanyUzytkownik.Id << "|" << dodawanyUzytkownik.nazwa
-                                          << "|" << dodawanyUzytkownik.haslo << "|";
+            plikPrzechowujacyUzytkownikow << endl << dodawanyUzytkownik.pokazId() << "|" << dodawanyUzytkownik.pokazNazwe()
+                                          << "|" << dodawanyUzytkownik.pokazHaslo() << "|";
         }
         else
         {
-            plikPrzechowujacyUzytkownikow << dodawanyUzytkownik.Id << "|" << dodawanyUzytkownik.nazwa
-                                          << "|" << dodawanyUzytkownik.haslo << "|";
+            plikPrzechowujacyUzytkownikow << dodawanyUzytkownik.pokazId() << "|" << dodawanyUzytkownik.pokazNazwe()
+                                          << "|" << dodawanyUzytkownik.pokazHaslo() << "|";
         }
         plikPrzechowujacyUzytkownikow.close();
+        cout << "Zarejestrowano uzytkownika " << dodawanyUzytkownik.pokazNazwe() << endl;
+        system ("pause >null");
     }
 }
 
-int wczytajUzytkownikow (vector <Uzytkownik>& uzytkownicy, int ostatniNumerIdUzytkownika)
+int wczytajUzytkownikow (vector <Uzytkownik>& uzytkownicy)
 {
     fstream plikPrzechowujacyUztykownikow;
     plikPrzechowujacyUztykownikow.open ("uzytkownicy.txt", ios::in);
@@ -98,22 +135,22 @@ int wczytajUzytkownikow (vector <Uzytkownik>& uzytkownicy, int ostatniNumerIdUzy
                     j++;
                 }
             }
-            pobieranyUzytkownik.Id = atoi ((*podzieloneDane).c_str());
-            pobieranyUzytkownik.nazwa = *(podzieloneDane + 1);
-            pobieranyUzytkownik.haslo = *(podzieloneDane + 2);
+            pobieranyUzytkownik.ustawId(atoi ((*podzieloneDane).c_str()));
+            pobieranyUzytkownik.ustawNazwe(*(podzieloneDane + 1));
+            pobieranyUzytkownik.ustawHaslo(*(podzieloneDane + 2));
             delete podzieloneDane;
             uzytkownicy.push_back(pobieranyUzytkownik);
         }
     }
     plikPrzechowujacyUztykownikow.close();
-    return uzytkownicy[uzytkownicy.size()-1].Id;
+    return uzytkownicy[uzytkownicy.size()-1].pokazId();
 }
 
 int znajdzIndeksUzytkownika (vector <Uzytkownik> uzytkownicy, string nazwa)
 {
     for (int i = 0; i < uzytkownicy.size(); i++)
     {
-        if (uzytkownicy[i].nazwa == nazwa)
+        if (uzytkownicy[i].pokazNazwe() == nazwa)
             return i;
     }
     return 0;
@@ -553,13 +590,13 @@ void zmienHaslo (int numerUzytkownika, vector <Uzytkownik>& uzytkownicy)
         int indeksUzytkownika = 0;
         for (int i = 0; i < uzytkownicy.size(); i++)
         {
-            if (uzytkownicy[i].Id == numerUzytkownika)
+            if (uzytkownicy[i].pokazId() == numerUzytkownika)
             {
                 indeksUzytkownika = i;
                 break;
             }
         }
-        if (podaneDotychczasoweHaslo != uzytkownicy[indeksUzytkownika].haslo)
+        if (podaneDotychczasoweHaslo != uzytkownicy[indeksUzytkownika].pokazHaslo())
         {
             cout << "Podane haslo jest nieprawidlowe"<<endl;
             system ("pause >null");
@@ -569,7 +606,7 @@ void zmienHaslo (int numerUzytkownika, vector <Uzytkownik>& uzytkownicy)
             string noweHaslo = "";
             cout << "Podaj nowe haslo: ";
             cin >> noweHaslo;
-            uzytkownicy[indeksUzytkownika].haslo = noweHaslo;
+            uzytkownicy[indeksUzytkownika].ustawHaslo( noweHaslo );
             cout << "Haslo zostalo zmienione";
             system ("pause >null");
             break;
@@ -581,7 +618,8 @@ void zmienHaslo (int numerUzytkownika, vector <Uzytkownik>& uzytkownicy)
     {
         if (i > 0)
             plikZDanymiUzytkownikow << endl;
-        plikZDanymiUzytkownikow << uzytkownicy[i].Id << "|" << uzytkownicy[i].nazwa << "|" << uzytkownicy[i].haslo << "|";
+        plikZDanymiUzytkownikow << uzytkownicy[i].pokazId() << "|" << uzytkownicy[i].pokazNazwe() << "|"
+        << uzytkownicy[i].pokazHaslo() << "|";
     }
     plikZDanymiUzytkownikow.close();
     return;
@@ -677,14 +715,14 @@ void zalogujSie (vector <Uzytkownik>& uzytkownicy)
             {
                 cout << "Podaj haslo: ";
                 cin >> podaneHaslo;
-                if (podaneHaslo != uzytkownicy[indeksUzytkownika].haslo)
+                if (podaneHaslo != uzytkownicy[indeksUzytkownika].pokazHaslo())
                 {
                     cout << "haslo niepoprawne"<<endl;
                     system ("pause >null");
                 }
                 else
                 {
-                    wczytajKsiazkeAdresowa(uzytkownicy[indeksUzytkownika].Id, uzytkownicy);
+                    wczytajKsiazkeAdresowa(uzytkownicy[indeksUzytkownika].pokazId(), uzytkownicy);
                     break;
                 }
             }
@@ -700,7 +738,7 @@ void zalogujSie (vector <Uzytkownik>& uzytkownicy)
 int main()
 {
     vector <Uzytkownik> uzytkownicy;
-    int ostatniNumerIdUzytkownika = wczytajUzytkownikow(uzytkownicy, ostatniNumerIdUzytkownika);
+    int ostatniNumerIdUzytkownika = wczytajUzytkownikow(uzytkownicy);
     char wybranaOpcja;
 
     while(true)
